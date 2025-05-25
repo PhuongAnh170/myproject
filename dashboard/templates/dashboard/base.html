@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'dashboard/css/style.css' %}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="logo">
+                <h2>Business Analytics</h2>
+            </div>
+            <div class="navigation">
+                <ul>
+                    <li class="{% if request.path == '/dashboard/overview/' or request.path == '/dashboard/' %}active{% endif %}">
+                        <a href="{% url 'dashboard:overview' %}">Overview</a>
+                    </li>
+                    <li class="{% if request.path == '/dashboard/delivery/' %}active{% endif %}">
+                        <a href="{% url 'dashboard:delivery' %}">Delivery</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>{% block header_title %}Dashboard{% endblock %}</h1>
+                <div class="filters">
+                    {% block filters %}{% endblock %}
+                </div>
+            </div>
+            <div class="dashboard-content">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

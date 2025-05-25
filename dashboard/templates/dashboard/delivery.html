@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Performance Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            color: white;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-menu li {
+            margin-bottom: 10px;
+        }
+
+        .nav-menu a {
+            display: block;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .dashboard-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .kpi-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            color: white;
+            transition: transform 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .kpi-card.success {
+            border-left: 4px solid #00b894;
+        }
+
+        .kpi-card.warning {
+            border-left: 4px solid #fdcb6e;
+        }
+
+        .kpi-card.danger {
+            border-left: 4px solid #e17055;
+        }
+
+        .kpi-title {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 400px);
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .chart-content {
+            height: 300px;
+            position: relative;
+        }
+
+        .metric-list {
+            list-style: none;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .metric-item:last-child {
+            border-bottom: none;
+        }
+
+        .metric-name {
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #ffeaa7;
+        }
+
+        canvas {
+            max-height: 100% !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <h2><i class="fas fa-chart-line"></i> Dashboard</h2>
+            <nav>
+                <ul class="nav-menu">
+                    <li>
+                        <a href="/">
+                            <i class="fas fa-tachometer-alt"></i> Executive Overview
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/delivery/" class="active">
+                            <i class="fas fa-truck"></i> Delivery Performance
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <h1>DELIVERY DASHBOARD</h1>
+                <p>Real-time delivery performance and logistics insights</p>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-section">
+                <div class="kpi-card success">
+                    <div class="kpi-title">Total Orders</div>
+                    <div class="kpi-value">{{ total_orders|floatformat:0 }}</div>
+                </div>
+                <div class="kpi-card success">
+                    <div class="kpi-title">On-Time Rate</div>
+                    <div class="kpi-value">{{ on_time_rate }}%</div>
+                </div>
+                <div class="kpi-card warning">
+                    <div class="kpi-title">Late Rate</div>
+                    <div class="kpi-value">{{ late_rate }}%</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Avg Shipping Days</div>
+                    <div class="kpi-value">{{ avg_shipping_days }}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Avg Scheduled Days</div>
+                    <div class="kpi-value">{{ avg_scheduled_days }}</div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <!-- Monthly Performance Chart -->
+                <div class="chart-container">
+                    <div class="chart-title">Monthly Order Volume</div>
+                    <div class="chart-content">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Shipping Mode Performance Chart -->
+                <div class="chart-container">
+                    <div class="chart-title">Top Shipping Modes</div>
+                    <div class="chart-content">
+                        <canvas id="shippingModeChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Delivery Status Distribution -->
+                <div class="chart-container">
+                    <div class="chart-title">Delivery Status Distribution</div>
+                    <div class="chart-content">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top Countries -->
+                <div class="chart-container">
+                    <div class="chart-title">Top Countries by Orders</div>
+                    <div class="chart-content">
+                        <ul class="metric-list" id="countryList"></ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Data from Django view
+        const deliveryData = {
+            monthly: {{ monthly_delivery|safe }},
+            shippingMode: {{ shipping_mode_performance|safe }},
+            deliveryStatus: {{ delivery_status_dist|safe }},
+            countries: {{ country_performance|safe }}
+        };
+
+        // Chart instances
+        let charts = {};
+
+        // Helper function to get monthly data
+        function getMonthlyData(data) {
+            const monthlyValues = new Array(12).fill(0);
+            data.forEach(item => {
+                if (item.month >= 1 && item.month <= 12) {
+                    monthlyValues[item.month - 1] = item.total_orders || 0;
+                }
+            });
+            return monthlyValues;
+        }
+
+        // Initialize charts
+        function initCharts() {
+            // Monthly Order Volume Chart
+            const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+            charts.monthly = new Chart(monthlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Orders',
+                        data: getMonthlyData(deliveryData.monthly),
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: 'white' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: 'white' }
+                        }
+                    }
+                }
+            });
+
+            // Shipping Mode Chart
+            const shippingModeCtx = document.getElementById('shippingModeChart').getContext('2d');
+            charts.shippingMode = new Chart(shippingModeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: deliveryData.shippingMode.map(item => item.shipping_mode),
+                    datasets: [{
+                        data: deliveryData.shippingMode.map(item => item.total),
+                        backgroundColor: ['#667eea', '#f093fb', '#ffeaa7', '#74b9ff', '#00b894'],
+                        borderWidth: 3,
+                        borderColor: 'rgba(255,255,255,0.8)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { 
+                                padding: 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Delivery Status Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            charts.status = new Chart(statusCtx, {
+                type: 'pie',
+                data: {
+                    labels: deliveryData.deliveryStatus.map(item => item.delivery_status),
+                    datasets: [{
+                        data: deliveryData.deliveryStatus.map(item => item.total),
+                        backgroundColor: ['#00b894', '#fdcb6e', '#74b9ff', '#e17055'],
+                        borderWidth: 3,
+                        borderColor: 'rgba(255,255,255,0.8)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { 
+                                padding: 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update country list
+        function updateCountryList() {
+            const countryList = document.getElementById('countryList');
+            countryList.innerHTML = '';
+            
+            deliveryData.countries.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'metric-item';
+                li.innerHTML = `
+                    <span class="metric-name">${item.order_country}</span>
+                    <span class="metric-value">${item.total.toLocaleString()}</span>
+                `;
+                countryList.appendChild(li);
+            });
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            updateCountryList();
+        });
+    </script>
+</body>
+</html>
